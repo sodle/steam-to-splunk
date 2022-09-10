@@ -1,0 +1,194 @@
+{
+	"visualizations": {
+		"viz_LeyIyqTA": {
+			"type": "splunk.singlevalue",
+			"dataSources": {
+				"primary": "ds_F7dI2hGS"
+			},
+			"title": "Total Number of Steam Transactions"
+		},
+		"viz_23vKiKqG": {
+			"type": "splunk.singlevalue",
+			"dataSources": {
+				"primary": "ds_UKAX6Wf2"
+			},
+			"title": "Total Spent on Steam",
+			"options": {
+				"numberPrecision": 2,
+				"unitPosition": "before",
+				"unit": "$"
+			},
+			"showProgressBar": false,
+			"showLastUpdated": false
+		},
+		"viz_SjbN7hP4": {
+			"type": "splunk.column",
+			"options": {
+				"yAxisTitleText": "$ Spent",
+				"xAxisTitleText": "Year",
+				"legendDisplay": "off"
+			},
+			"dataSources": {
+				"primary": "ds_k9RIK4al"
+			},
+			"title": "Annual Spend"
+		},
+		"viz_0xvBse4W": {
+			"type": "splunk.table",
+			"dataSources": {
+				"primary": "ds_b3KVPB2a"
+			},
+			"title": "Biggest Purchases",
+			"options": {
+				"columnFormat": {
+					"Total": {
+						"data": "> table | seriesByName(\"Total\") | formatByType(TotalColumnFormatEditorConfig)"
+					}
+				}
+			},
+			"context": {
+				"TotalColumnFormatEditorConfig": {
+					"number": {
+						"thousandSeparated": false,
+						"unitPosition": "before",
+						"unit": "$",
+						"precision": 2
+					}
+				}
+			}
+		}
+	},
+	"dataSources": {
+		"ds_pAbS0Hx2": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=steam sourcetype=steam:purchase \n| stats count by source"
+			},
+			"name": "list_users"
+		},
+		"ds_F7dI2hGS": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=steam sourcetype=steam:purchase source=$steam_user$ \n| stats count"
+			},
+			"name": "purchase_count"
+		},
+		"ds_UKAX6Wf2": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=steam sourcetype=steam:purchase source=$steam_user$\n| stats sum(total) as sum"
+			},
+			"name": "total_spend"
+		},
+		"ds_k9RIK4al": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=steam sourcetype=steam:purchase source=$steam_user$\n| timechart span=y sum(total) as sum\n| convert timeformat=\"%Y\" ctime(_time) AS time\n| fields - _time \n| fields time,*"
+			},
+			"name": "annual_spend"
+		},
+		"ds_b3KVPB2a": {
+			"type": "ds.search",
+			"options": {
+				"query": "index=steam sourcetype=steam:purchase source=$steam_user$\n| table date \"items{}\" total \n| rename date as Date items{} as Items total as Total\n| sort - Total\n| head 5"
+			},
+			"name": "biggest_purchases"
+		}
+	},
+	"defaults": {
+		"dataSources": {
+			"ds.search": {
+				"options": {
+					"queryParameters": {
+						"latest": "$global_time.latest$",
+						"earliest": "$global_time.earliest$"
+					}
+				}
+			}
+		}
+	},
+	"inputs": {
+		"input_global_trp": {
+			"type": "input.timerange",
+			"options": {
+				"token": "global_time",
+				"defaultValue": "0,"
+			},
+			"title": "Time Range"
+		},
+		"input_iyUT1CKL": {
+			"options": {
+				"items": ">frame(label, value) | prepend(formattedStatics) | objects()",
+				"token": "steam_user"
+			},
+			"title": "Steam User",
+			"type": "input.dropdown",
+			"dataSources": {
+				"primary": "ds_pAbS0Hx2"
+			},
+			"context": {
+				"formattedConfig": {
+					"number": {
+						"prefix": ""
+					}
+				},
+				"formattedStatics": ">statics | formatByType(formattedConfig)",
+				"statics": [],
+				"label": ">primary | seriesByName(\"source\") | renameSeries(\"label\") | formatByType(formattedConfig)",
+				"value": ">primary | seriesByName(\"source\") | renameSeries(\"value\") | formatByType(formattedConfig)"
+			}
+		}
+	},
+	"layout": {
+		"type": "grid",
+		"options": {},
+		"structure": [
+			{
+				"item": "viz_23vKiKqG",
+				"type": "block",
+				"position": {
+					"x": 0,
+					"y": 0,
+					"w": 613,
+					"h": 168
+				}
+			},
+			{
+				"item": "viz_SjbN7hP4",
+				"type": "block",
+				"position": {
+					"x": 0,
+					"y": 168,
+					"w": 1200,
+					"h": 307
+				}
+			},
+			{
+				"item": "viz_0xvBse4W",
+				"type": "block",
+				"position": {
+					"x": 0,
+					"y": 475,
+					"w": 1200,
+					"h": 483
+				}
+			},
+			{
+				"item": "viz_LeyIyqTA",
+				"type": "block",
+				"position": {
+					"x": 613,
+					"y": 0,
+					"w": 587,
+					"h": 168
+				}
+			}
+		],
+		"globalInputs": [
+			"input_global_trp",
+			"input_iyUT1CKL"
+		]
+	},
+	"description": "",
+	"title": "Steam Stats"
+}
